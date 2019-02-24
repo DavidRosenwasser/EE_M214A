@@ -1,4 +1,4 @@
-function [fileList1,fileList2, labels] = GetData(filename)
+function [fileList1,fileList2, labels] = get_data(filename)
 % Formats files into matricies with 
 	% Train the classifier
 	fid = fopen(filename); % Opens trainList file
