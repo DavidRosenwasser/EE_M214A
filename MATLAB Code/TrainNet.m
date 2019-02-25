@@ -43,7 +43,7 @@ t = trainLabels;
 
 % instantiate feed forward net with 3 layers of 20 neurons each
 % tune as needed
-net = feedforwardnet([10 10 10]);
+net = feedforwardnet([30 40 50]);
 
 % configure training/validation/testing ratio
 net.divideParam.trainRatio = 70/100;
