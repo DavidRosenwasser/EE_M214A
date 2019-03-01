@@ -24,11 +24,11 @@ myFiles = myData{1};    % myData{1} contains a 565x1 cell that has all the audio
 
 for cnt = 1:length(myFiles) % For each of the 565 files
     [audioIn,fs] = audioread(myFiles{cnt}); % Extract sample data and sample rate
-    [F0,lik] = fast_mbsc_fixedWinlen_tracking(audioIn,fs);  % Estimated pitch (F0) and lik = frame degree of voicing for EACH FRAME -> F0 & lik are 500x1 column vector
-    avg_F0 = mean(F0(lik>0.45));
-    [coeff] = v_melcepst(audioIn,fs,'Mtaz',MFCC_Num); % MFCC; add 'dD' for Second delta MCFF, Third delta delta MCFF
+    %[F0,lik] = fast_mbsc_fixedWinlen_tracking(audioIn,fs);  % Estimated pitch (F0) and lik = frame degree of voicing for EACH FRAME -> F0 & lik are 500x1 column vector
+    %avg_F0 = mean(F0(lik>0.45));
+    [coeff] = v_melcepst(audioIn,fs,'Mtazd',MFCC_Num); % MFCC; add 'dD' for Second delta MCFF, Third delta delta MCFF
     coeff_avg = mean(coeff);
-    featureDict(myFiles{cnt}) = cat(2,avg_F0,coeff_avg);
+    featureDict(myFiles{cnt}) = coeff_avg;%cat(2,avg_F0,coeff_avg);
     if(mod(cnt,5)==0)
         disp(['Completed ',num2str(cnt),' of ',num2str(length(myFiles)),' files.']);
     end
@@ -41,7 +41,7 @@ trainList = 'train_read.txt';
 testList = 'test_read.txt';
 % Train the Classifier
 [trainFeatures, trainLabels, num_features] = trainClassifier(trainList, featureDict);
-Mdl = fitcknn(trainFeatures,trainLabels,'NumNeighbors',15000,'Standardize',1);
+Mdl = fitcknn(trainFeatures,trainLabels,'NumNeighbors',7500,'Standardize',1);
 
 % Test the classifier
 [testFeatures, testLabels] = testClassifier(testList, num_features, featureDict);
@@ -54,11 +54,8 @@ EER_Matrix(1,1) = eer;
 
 %%
 % Train Read, Test Phone
-trainList = 'train_read.txt';  
 testList = 'test_phone.txt';
-% Train the Classifier
-[trainFeatures, trainLabels, num_features] = trainClassifier(trainList, featureDict);
-Mdl = fitcknn(trainFeatures,trainLabels,'NumNeighbors',15000,'Standardize',1);
+% Use Mdl from previous training
 
 % Test the classifier
 [testFeatures, testLabels] = testClassifier(testList, num_features, featureDict);
@@ -71,11 +68,8 @@ EER_Matrix(1,2) = eer;
 
 %%
 % Train Read, Test Mismatch
-trainList = 'train_read.txt';  
 testList = 'test_mismatch.txt';
-% Train the Classifier
-[trainFeatures, trainLabels, num_features] = trainClassifier(trainList, featureDict);
-Mdl = fitcknn(trainFeatures,trainLabels,'NumNeighbors',15000,'Standardize',1);
+% Use Mdl from previous training
 
 % Test the classifier
 [testFeatures, testLabels] = testClassifier(testList, num_features, featureDict);
@@ -91,7 +85,7 @@ trainList = 'train_phone.txt';
 testList = 'test_read.txt';
 % Train the Classifier
 [trainFeatures, trainLabels, num_features] = trainClassifier(trainList, featureDict);
-Mdl = fitcknn(trainFeatures,trainLabels,'NumNeighbors',15000,'Standardize',1);
+Mdl = fitcknn(trainFeatures,trainLabels,'NumNeighbors',7500,'Standardize',1);
 
 % Test the classifier
 [testFeatures, testLabels] = testClassifier(testList, num_features, featureDict);
@@ -104,11 +98,8 @@ EER_Matrix(2,1) = eer;
 
 %%
 % Train Phone, Test Phone
-trainList = 'train_phone.txt';
 testList = 'test_phone.txt';
-% Train the Classifier
-[trainFeatures, trainLabels, num_features] = trainClassifier(trainList, featureDict);
-Mdl = fitcknn(trainFeatures,trainLabels,'NumNeighbors',15000,'Standardize',1);
+% Use Mdl from previous training
 
 % Test the classifier
 [testFeatures, testLabels] = testClassifier(testList, num_features, featureDict);
@@ -120,11 +111,8 @@ EER_Matrix(2,2) = eer;
 
 %%
 % Train Phone, Test Mismatch
-trainList = 'train_phone.txt';
 testList = 'test_mismatch.txt';
-% Train the Classifier
-[trainFeatures, trainLabels, num_features] = trainClassifier(trainList, featureDict);
-Mdl = fitcknn(trainFeatures,trainLabels,'NumNeighbors',15000,'Standardize',1);
+% Use Mdl from previous training
 
 % Test the classifier
 [testFeatures, testLabels] = testClassifier(testList, num_features, featureDict);
@@ -135,8 +123,8 @@ disp(['The EER is ',num2str(eer),'%.']);
 EER_Matrix(2,3) = eer;
 
 disp(EER_Matrix);
-toc
 
+toc
 
 
 
