@@ -4,13 +4,15 @@
 % Hamza Zamani, David Rosenwasser, & Taishi Kato
 %##############################################################
 
-clear variables;
+clear all;
 clc;
 %%
 % Definitions
 allFiles = 'allFiles.txt';
 EER_Matrix = zeros(2,3);
 MFCC_Num = 12;
+num_neighbors = 75;
+pre_emph = [1 -0.95];
 
 tic
 %% 
@@ -24,12 +26,14 @@ myFiles = myData{1};    % myData{1} contains a 565x1 cell that has all the audio
 
 for cnt = 1:length(myFiles) % For each of the 565 files
     [audioIn,fs] = audioread(myFiles{cnt}); % Extract sample data and sample rate
+	audioIn = filter(pre_emph,1,audioIn);
     %[F0,lik] = fast_mbsc_fixedWinlen_tracking(audioIn,fs);  % Estimated pitch (F0) and lik = frame degree of voicing for EACH FRAME -> F0 & lik are 500x1 column vector
     %avg_F0 = mean(F0(lik>0.45));
-    [coeff] = v_melcepst(audioIn,fs,'Mtazd',MFCC_Num); % MFCC; add 'dD' for Second delta MCFF, Third delta delta MCFF
+    [coeff] = v_melcepst(audioIn,fs,'Mtaz',MFCC_Num); % MFCC; add 'dD' for Second delta MCFF, Third delta delta MCFF
     coeff_avg = mean(coeff);
-    featureDict(myFiles{cnt}) = coeff_avg;%cat(2,avg_F0,coeff_avg);
-    if(mod(cnt,5)==0)
+    coeff_std = std(coeff);
+    featureDict(myFiles{cnt}) = cat(2,coeff_avg,coeff_std);
+    if(mod(cnt,10)==0)
         disp(['Completed ',num2str(cnt),' of ',num2str(length(myFiles)),' files.']);
     end
 end
@@ -41,7 +45,7 @@ trainList = 'train_read.txt';
 testList = 'test_read.txt';
 % Train the Classifier
 [trainFeatures, trainLabels, num_features] = trainClassifier(trainList, featureDict);
-Mdl = fitcknn(trainFeatures,trainLabels,'NumNeighbors',7500,'Standardize',1);
+Mdl = fitcknn(trainFeatures,trainLabels,'NumNeighbors',num_neighbors,'Distance','seuclidean','Standardize',1);
 
 % Test the classifier
 [testFeatures, testLabels] = testClassifier(testList, num_features, featureDict);
@@ -85,7 +89,7 @@ trainList = 'train_phone.txt';
 testList = 'test_read.txt';
 % Train the Classifier
 [trainFeatures, trainLabels, num_features] = trainClassifier(trainList, featureDict);
-Mdl = fitcknn(trainFeatures,trainLabels,'NumNeighbors',7500,'Standardize',1);
+Mdl = fitcknn(trainFeatures,trainLabels,'NumNeighbors',num_neighbors,'Distance','seuclidean','Standardize',1);
 
 % Test the classifier
 [testFeatures, testLabels] = testClassifier(testList, num_features, featureDict);
@@ -129,7 +133,7 @@ toc
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%Functions
+%Helper Functions
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 function [trainFeatures, trainLabels, num_col] = trainClassifier(trainList, featureDict)
