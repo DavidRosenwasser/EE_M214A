@@ -9,6 +9,7 @@
 clear all;
 clc;
 %% config
+tic
 vert_cat = 0;
 %%
 % Define lists
@@ -31,13 +32,15 @@ for cnt = 1:length(myFiles)         % For each of the 565 files
     [audioIn,fs] = audioread(myFiles{cnt});                 % Extract sample data and sample rate
     %[F0,lik] = fast_mbsc_fixedWinlen_tracking(audioIn,fs);  % Estimated pitch (F0) and lik = frame degree of voicing for EACH FRAME -> F0 & lik are 500x1 column vector
     %avg_F0 = mean(F0(lik>0.45));
-    [coeff] = v_melcepst(audioIn,fs,'M0tazdD');
+    [coeff] = v_melcepst(audioIn,fs,'M0tazdD', 13);
     coeff_avg = mean(coeff);
-    m = mean(coeff_avg);
-    s = std(coeff_avg);       
+    m = mean(coeff);
+    s = std(coeff);   
+   [GMM_speaker, ~, ~] = v_gaussmix(coeff_avg, [], [], 1, 'hf'); % input, default, default, # of mixtures, default
+   FeatureDict(myFiles{cnt}) = GMM_speaker; %coeff_avg;%cat(2,avg_F0,coeff_avg);
     % intermediate variable prior to adding to the dictionary 
     %entry = horzcat(avg_F0, m, s, coeff_avg);
-    entry = horzcat(m, s, coeff_avg);
+    entry = horzcat(m, s, GMM_speaker);
     FeatureDict(myFiles{cnt}) = entry';
     if(mod(cnt,5)==0)
         disp(['Completed ',num2str(cnt),' of ',num2str(length(myFiles)),' files.']);
@@ -55,7 +58,7 @@ fclose(fid);
 fileList1 = myData{1};
 fileList2 = myData{2};
 trainLabels = myData{3};
-
+[fileList1, fileList2, trainLabels] = PruneData(trainList_phone);
 %
 disp('format the label (or target) matrix');
 % format the label (or target) matrix 
@@ -73,9 +76,9 @@ end
 % Multiply by two since our training data consists of 2 speech samples
 % to be compared
 if (vert_cat == 1)
-    numRows = length(FeatureDict(fileList1{cnt}))*2;
+    numRows = length(FeatureDict(fileList1{1}))*2;
 else
-    numRows = length(FeatureDict(fileList1{cnt}));
+    numRows = length(FeatureDict(fileList1{1}));
 end
 
 % # of col for training matrix. numCol = # of labels (test cases).
@@ -106,11 +109,15 @@ x = trainFeatures;
 t = trainLabels;
 % set seed for initial untrained weights
 %setdemorandstream(391418381)
-net = feedforwardnet([30 40 50]);
+net = patternnet([30 30 30]);
 %view(net)
 % train the network
 [net,tr] = train(net,x,t);
 nntraintool
+
+o = sim(net,x);
+plotroc(t,o)
+plotconfusion(t,o)
 %% PHONE-READ
 % now extract data from test_read.txt and input to network
 disp('extract data from test_read.txt');
@@ -302,3 +309,6 @@ for i=1:length(testOutput)
     end
 end
 
+disp('nn_phone_scratch done');
+
+toc
