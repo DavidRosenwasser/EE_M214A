@@ -11,7 +11,7 @@ clc;
 % Definitions
 allFiles = 'allFiles.txt';
 EER_Matrix = zeros(2,3);
-MFCC_Num = 20;
+MFCC_Num = 12;
 
 %% Feature Extraction of all files
 FeatureDict = containers.Map;       % Create features dictionary
@@ -22,17 +22,17 @@ myFiles = myData{1};                % myData{1} contains a 565x1 cell that has a
 
 for cnt = 1:length(myFiles)         % For each of the 565 files
     [audioIn,fs] = audioread(myFiles{cnt});                 % Extract sample data and sample rate
-    [F0,lik] = fast_mbsc_fixedWinlen_tracking(audioIn,fs);  % Estimated pitch (F0) and lik = frame degree of voicing for EACH FRAME -> F0 & lik are 500x1 column vector
-    avg_F0 = mean(F0(lik>0.45));
+    %[F0,lik] = fast_mbsc_fixedWinlen_tracking(audioIn,fs);  % Estimated pitch (F0) and lik = frame degree of voicing for EACH FRAME -> F0 & lik are 500x1 column vector
+    %avg_F0 = mean(F0(lik>0.45));
     [coeff] = v_melcepst(audioIn,fs,'M0tazdD', MFCC_Num);
     coeff_avg = mean(coeff);      
-    coeff_std = std(coeff);
-    coeff_avg_std = std(coeff_avg);
+    m = mean(coeff_avg);
+    s = std(coeff_avg);   
     % concatinate average F0 and averaged coeff
     % add features as desired here prior to adding to dictionary
     % note: adding dictionary values as col vector
-    %FeatureDict(myFiles{cnt}) = horzcat(avg_F0, coeff_avg)';
-    FeatureDict(myFiles{cnt}) = horzcat(coeff_avg, coeff_std, coeff_avg_std)';
+    FeatureDict(myFiles{cnt}) = horzcat(m, s, coeff_avg)';
+    %FeatureDict(myFiles{cnt}) = horzcat(avg_F0, m, s, coeff_avg)';
     if(mod(cnt,5)==0)
         disp(['Completed ',num2str(cnt),' of ',num2str(length(myFiles)),' files.']);
     end
@@ -40,10 +40,13 @@ end
 
 %% Extract all data for use later
 % Read training and test  
-[trainReadList1,trainReadList2, trainReadLabels] = get_data('train_read.txt');
+%[trainReadList1,trainReadList2, trainReadLabels] = get_data('train_read.txt');
+[trainReadList1, trainReadList2, trainReadLabels] = PruneData('train_read.txt');
 [testReadList1,testReadList2, testReadLabels] = get_data('test_read.txt');
+
 % Phone training and test  
-[trainPhoneList1,trainPhoneList2, trainPhoneLabels] = get_data('train_phone.txt');
+%[trainPhoneList1,trainPhoneList2, trainPhoneLabels] = get_data('train_phone.txt');
+[trainPhoneList1, trainPhoneList2, trainPhoneLabels] = PruneData('train_phone.txt');
 [testPhoneList1,testPhoneList2, testPhoneLabels] = get_data('test_phone.txt');
 % Mismatch training and test
 [testMismatchList1,testMismatchList2, testMismatchLabels] = get_data('test_mismatch.txt');
@@ -101,17 +104,11 @@ for i =1:length(testMismatchLabels)
     testMismatchFeatures(:,i) = -abs(FeatureDict(testMismatchList1{cnt})-FeatureDict(testMismatchList2{cnt}));
 end
 
-%% create matricies for combined training and testing of all given data
-% train data
-trainAllLabels = vertcat(trainReadLabels, trainPhoneLabels)';
-trainingAllFeatures = [trainReadFeatures trainPhoneFeatures];
-% test data
-testAllLabels = vertcat(testReadLabels, testPhoneLabels, testMismatchLabels)';
-testAllFeatures = [testReadFeatures testPhoneFeatures testMismatchFeatures];
-
 %% Test the net for each case
 % train a net based on read data
+
 [net_read] = TrainNet(trainReadFeatures,trainReadLabelsRow);
+net_read = net;
 [net_phone] = TrainNet(trainPhoneFeatures,trainPhoneLabelsRow);
 % Train Read, Test Read
 EER = TestNet(net_read, testReadFeatures, testReadLabelsRow);
@@ -146,9 +143,16 @@ disp(['The PHONE-MISMATCH EER is ',num2str(EER),'%.']);
 % Present results
 disp(EER_Matrix);
 %% Train neural net with all training data
+% create matricies for combined training and testing of all given data
+% train data
+trainAllLabels = vertcat(trainReadLabels, trainPhoneLabels)';
+trainingAllFeatures = [trainReadFeatures trainPhoneFeatures];
+% test data
+testAllLabels = vertcat(testReadLabels, testPhoneLabels, testMismatchLabels)';
+testAllFeatures = [testReadFeatures testPhoneFeatures testMismatchFeatures];
 % train a net with both read and phone training sets
-net_comb = TrainNet(trainingAllFeatures,trainAllLabels);
+%net_comb = TrainNet(trainingAllFeatures,trainAllLabels);
 % test the trained net with all labelled test vectors given (read, phone,
 % mismatch)
-EER_comb = TestNet(net_comb, testAllFeatures, testAllLabels);
-disp(['The Total EER is ',num2str(EER_comb),'%.']);
+%EER_comb = TestNet(net_comb, testAllFeatures, testAllLabels);
+%disp(['The Total EER is ',num2str(EER_comb),'%.']);
