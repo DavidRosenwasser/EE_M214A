@@ -45,7 +45,7 @@ trainList = 'train_read.txt';
 testList = 'test_read.txt';
 % Train the Classifier
 [trainFeatures, trainLabels, num_features] = trainClassifier(trainList, featureDict);
-Mdl = fitcknn(trainFeatures,trainLabels,'NumNeighbors',num_neighbors,'Distance','seuclidean','Standardize',1);
+Mdl = fitcknn(trainFeatures,trainLabels,'OptimizeHyperparameters','auto','HyperparameterOptimizationOptions',struct('ShowPlots',false));
 
 % Test the classifier
 [testFeatures, testLabels] = testClassifier(testList, num_features, featureDict);
@@ -89,7 +89,7 @@ trainList = 'train_phone.txt';
 testList = 'test_read.txt';
 % Train the Classifier
 [trainFeatures, trainLabels, num_features] = trainClassifier(trainList, featureDict);
-Mdl = fitcknn(trainFeatures,trainLabels,'NumNeighbors',num_neighbors,'Distance','seuclidean','Standardize',1);
+Mdl = fitcknn(trainFeatures,trainLabels,'OptimizeHyperparameters','auto','HyperparameterOptimizationOptions',struct('ShowPlots',false));
 
 % Test the classifier
 [testFeatures, testLabels] = testClassifier(testList, num_features, featureDict);

@@ -58,7 +58,7 @@ Mdl = fitcknn(trainFeatures,trainLabels,'NumNeighbors',num_neighbors,'Distance',
 [~,prediction,~] = predict(Mdl,testFeatures);
 testScores = (prediction(:,2)./(prediction(:,1)+1e-15));
 [eer,~] = compute_eer(testScores, testLabels);
-disp(['The EER is ',num2str(eer),'%.']);
+disp(['The EER is ',num2str(eer),'% for train-read test-read.']);
 EER_Matrix(1,1) = eer;
 
 
@@ -72,7 +72,7 @@ testList = 'test_phone.txt';
 [~,prediction,~] = predict(Mdl,testFeatures);
 testScores = (prediction(:,2)./(prediction(:,1)+1e-15));
 [eer,~] = compute_eer(testScores, testLabels);
-disp(['The EER is ',num2str(eer),'%.']);
+disp(['The EER is ',num2str(eer),'% for train-read test-phone.']);
 EER_Matrix(1,2) = eer;
 
 
@@ -86,7 +86,7 @@ testList = 'test_mismatch.txt';
 [~,prediction,~] = predict(Mdl,testFeatures);
 testScores = (prediction(:,2)./(prediction(:,1)+1e-15));
 [eer,~] = compute_eer(testScores, testLabels);
-disp(['The EER is ',num2str(eer),'%.']);
+disp(['The EER is ',num2str(eer),'% for train-read test-mismatch.']);
 EER_Matrix(1,3) = eer;
 
 %%
@@ -102,7 +102,7 @@ Mdl = fitcknn(trainFeatures,trainLabels,'NumNeighbors',num_neighbors,'Distance',
 [~,prediction,~] = predict(Mdl,testFeatures);
 testScores = (prediction(:,2)./(prediction(:,1)+1e-15));
 [eer,~] = compute_eer(testScores, testLabels);
-disp(['The EER is ',num2str(eer),'%.']);
+disp(['The EER is ',num2str(eer),'% for train-phone test-read.']);
 EER_Matrix(2,1) = eer;
 
 
@@ -116,7 +116,7 @@ testList = 'test_phone.txt';
 [~,prediction,~] = predict(Mdl,testFeatures);
 testScores = (prediction(:,2)./(prediction(:,1)+1e-15));
 [eer,~] = compute_eer(testScores, testLabels);
-disp(['The EER is ',num2str(eer),'%.']);
+disp(['The EER is ',num2str(eer),'% for train-phone test-phone.']);
 EER_Matrix(2,2) = eer;
 
 %%
@@ -129,7 +129,7 @@ testList = 'test_mismatch.txt';
 [~,prediction,~] = predict(Mdl,testFeatures);
 testScores = (prediction(:,2)./(prediction(:,1)+1e-15));
 [eer,~] = compute_eer(testScores, testLabels);
-disp(['The EER is ',num2str(eer),'%.']);
+disp(['The EER is ',num2str(eer),'% train-phone test-mismatch.']);
 EER_Matrix(2,3) = eer;
 
 disp(EER_Matrix);

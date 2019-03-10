@@ -23,7 +23,7 @@ for cnt = 1:length(myFiles) % For each of the 565 files
     [snd,fs] = audioread(myFiles{cnt}); % Extract sample data and sample rate
     [F0,lik] = fast_mbsc_fixedWinlen_tracking(snd,fs);  % Estimated pitch (F0) and lik = frame degree of voicing for EACH FRAME -> F0 & lik are 500x1 column vector
     featureDict(myFiles{cnt}) = mean(F0(lik>0.45)); % Finds the F0s that are most likely from voiced regions and associates with file name and then takes average
-    if(mod(cnt,5)==0)
+    if(mod(cnt,10)==0)
         disp(['Completed ',num2str(cnt),' of ',num2str(length(myFiles)),' files.']);
     end
 end
