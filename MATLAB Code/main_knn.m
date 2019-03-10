@@ -4,9 +4,14 @@
 % Hamza Zamani, David Rosenwasser, & Taishi Kato
 %##############################################################
 
+% Description
+% This is the main code that does feature extraction, model training, and model testing in order to compute the EER for speaker verification.
+% 
+
 clear all;
 clc;
 %%
+
 % Definitions
 allFiles = 'allFiles.txt';
 EER_Matrix = zeros(2,3);
@@ -25,15 +30,15 @@ myData = textscan(fid,'%s');    % Read the file
 fclose(fid);    % Close the file
 myFiles = myData{1};    % myData{1} contains a 565x1 cell that has all the audio file directories
 
-for cnt = 1:length(myFiles) % For each of the 565 files
+for cnt = 1:length(myFiles) % For each all of the files
     [audioIn,fs] = audioread(myFiles{cnt}); % Extract sample data and sample rate
-	audioIn = filter(pre_emph,1,audioIn);
-    %[F0,lik] = fast_mbsc_fixedWinlen_tracking(audioIn,fs);  % Estimated pitch (F0) and lik = frame degree of voicing for EACH FRAME -> F0 & lik are 500x1 column vector
-    %avg_F0 = mean(F0(lik>0.45));
-    [coeff] = v_melcepst(audioIn,fs,'Mtaz',MFCC_Num); % MFCC; add 'dD' for Second delta MCFF, Third delta delta MCFF
+	audioIn = filter(pre_emph,1,audioIn); % Apply pre-emphasis filter
+    %[F0,lik] = fast_mbsc_fixedWinlen_tracking(audioIn,fs);  % Pitch, not used.
+    %avg_F0 = mean(F0(lik>0.45)); % Taking the average pitch, not used.
+    [coeff] = v_melcepst(audioIn,fs,'Mtaz',MFCC_Num); % Finding MFCCs; add 'dD' for Second delta MCFF, Third delta delta MCFF
     coeff_avg = mean(coeff);
     coeff_std = std(coeff);
-    featureDict(myFiles{cnt}) = cat(2,coeff_avg,coeff_std);
+    featureDict(myFiles{cnt}) = cat(2,coeff_avg,coeff_std); % Combine mean and std vectors to form feature vector
     if(mod(cnt,10)==0)
         disp(['Completed ',num2str(cnt),' of ',num2str(length(myFiles)),' files.']);
     end
@@ -137,6 +142,17 @@ toc
 %Helper Functions
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+
+% This function trains the classifier 
+% Inputs:
+%	- trainList: Text file that contains the training list of speakers to train the classifier
+%	- featureDict: Feature dictionary for all of the audio files
+%
+% Outputs:
+%	- trainFeatures: The negative absolute difference between feature vectors of the two speakers on the trainList
+%	- trainLabels:	The third column of the trainList file which shows whether or not the two speakers are the same
+%	- num_col:	This is the number of columns in the featureDict which singifies the number of features
+
 function [trainFeatures, trainLabels, num_col] = trainClassifier(trainList, featureDict)
 	% Train the classifier
 	fid = fopen(trainList); % Opens trainList file
@@ -152,6 +168,15 @@ function [trainFeatures, trainLabels, num_col] = trainClassifier(trainList, feat
 	    trainFeatures(cnt,:) = -abs(featureDict(fileList1{cnt})-featureDict(fileList2{cnt})); % Finds difference between avg F0 of first file and second file
 	end
 end
+
+% This function tests the classifier 
+% Inputs:
+%	- testList: Text file that contains the testing list of speakers to test the classifier
+%	- featureDict: Feature dictionary for all of the audio files
+%
+% Outputs:
+%	- testFeatures: The negative absolute difference between feature vectors of the two speakers on the testList
+%	- testLabels:	The third column of the testList file which shows whether or not the two speakers are the same
 
 function [testFeatures, testLabels] = testClassifier(testList, num_features, featureDict)
 	% Test the classifier
